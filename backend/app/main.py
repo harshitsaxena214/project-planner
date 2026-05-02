@@ -10,7 +10,7 @@ from app.api.routes.user import router as user_router
 app = FastAPI()
 
 origins = [
-    "http://localhost:3000",  # Next.js frontend
+    "http://localhost:3000",
 ]
 
 app.add_middleware(
@@ -39,14 +39,3 @@ async def get_me(user=Depends(get_current_user)):
         "email": user.get("email"),
         "full_payload": user
     }
-
-
-
-@app.post("/test-db")
-async def test_db():
-    res = supabase.table("projects").insert({
-        "user_id": "test_user",
-        "title": "Test Project"
-    }).execute()
-
-    return res.data
