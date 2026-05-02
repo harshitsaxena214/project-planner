@@ -13,7 +13,6 @@ model = genai.GenerativeModel("gemini-2.5-flash")
 class AIServiceError(Exception):
     pass
 
-
 async def analyze_code(code: str, language: str):
     try:
         if not code or not code.strip():
@@ -36,8 +35,6 @@ Analyze this {language} code and return ONLY valid JSON:
 Code:
 {code}
 """
-
-        # ⚠️ Gemini call
         response = model.generate_content(prompt)
 
         if not response or not response.text:
@@ -45,7 +42,6 @@ Code:
 
         text = response.text.strip()
 
-        # ✅ Try parsing JSON
         try:
             return json.loads(text)
 
@@ -60,15 +56,12 @@ Code:
             }
 
     except ValueError as e:
-        # User input issues
         raise AIServiceError(f"Invalid input: {str(e)}")
 
     except AIServiceError:
-        # Already handled, just re-raise
         raise
 
     except Exception as e:
-        # Unexpected errors (API failure, network, etc.)
         logger.error(f"AI service failed: {str(e)}")
 
         raise AIServiceError("Failed to analyze code. Please try again.")
