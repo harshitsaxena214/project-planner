@@ -1,47 +1,74 @@
-import os
 import google.generativeai as genai
-from dotenv import load_dotenv
+import os
+import json
+import logging
 
-load_dotenv()
+logger = logging.getLogger(__name__)
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 model = genai.GenerativeModel("gemini-2.5-flash")
 
-def parse_tasks(text: str):
-    lines = text.split("\n")
 
-    tasks = []
-    for line in lines:
-        line = line.strip()
+class AIServiceError(Exception):
+    pass
 
-        if line:
-            cleaned = line.lstrip("0123456789.-) ")
-            if cleaned:
-                tasks.append(cleaned)
 
-    return tasks
+async def analyze_code(code: str, language: str):
+    try:
+        if not code or not code.strip():
+            raise ValueError("Code cannot be empty")
 
-async def generate_tasks(title: str, description: str):
-    prompt = f"""
-    You are an expert project planner.
+        if len(code) > 10000:
+            raise ValueError("Code too large")
 
-    Break the following project into clear, actionable tasks.
+        prompt = f"""
+You are a senior software engineer.
 
-    Project Title: {title}
-    Description: {description}
+Analyze this {language} code and return ONLY valid JSON:
 
-    Rules:
-    - Return ONLY a numbered list
-    - Each task should be short and actionable
-    - No explanations
-    - Around 5–10 tasks
-    """
+{{
+  "explanation": "simple explanation",
+  "issues": ["issue1", "issue2"],
+  "improvements": ["improvement1", "improvement2"]
+}}
 
-    response = model.generate_content(prompt)
+Code:
+{code}
+"""
 
-    raw_text = response.text
+        # ⚠️ Gemini call
+        response = model.generate_content(prompt)
 
-    tasks = parse_tasks(raw_text)
+        if not response or not response.text:
+            raise AIServiceError("Empty response from AI model")
 
-    return tasks
+        text = response.text.strip()
+
+        # ✅ Try parsing JSON
+        try:
+            return json.loads(text)
+
+        except json.JSONDecodeError as e:
+            logger.warning(f"JSON parsing failed: {e}")
+            logger.warning(f"Raw response: {text}")
+
+            return {
+                "explanation": text,
+                "issues": [],
+                "improvements": []
+            }
+
+    except ValueError as e:
+        # User input issues
+        raise AIServiceError(f"Invalid input: {str(e)}")
+
+    except AIServiceError:
+        # Already handled, just re-raise
+        raise
+
+    except Exception as e:
+        # Unexpected errors (API failure, network, etc.)
+        logger.error(f"AI service failed: {str(e)}")
+
+        raise AIServiceError("Failed to analyze code. Please try again.")
