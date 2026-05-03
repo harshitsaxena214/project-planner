@@ -159,10 +159,10 @@ export function AppSidebar({ projects }: any) {
 
       </SidebarContent>
 
-      {/* ── Footer: User ── */}
+      {/*Footer: User*/}
       <SidebarFooter className="border-t border-black/[0.07]">
         <div className="flex items-center gap-3 px-2 py-1">
-          <UserButton afterSignOutUrl="/sign-in" />
+          <UserButton />
           <div className="group-data-[collapsible=icon]:hidden min-w-0 flex-1">
             <p className="text-sm font-medium text-gray-800 truncate">
               {user?.fullName ?? user?.firstName ?? ""}
