@@ -6,6 +6,7 @@ from app.api.routes.projects import router as projects_router
 from app.api.routes.ai import router as ai_router
 from app.api.routes.tasks import router as tasks_router
 from app.api.routes.user import router as user_router
+from app.api.webhooks.clerk import router as webhook_router
 
 app = FastAPI()
 
@@ -27,6 +28,7 @@ def read_root():
     return {"message": "App is listening"}
 
 app.include_router(user_router)
+app.include_router(webhook_router)
 app.include_router(projects_router)
 app.include_router(ai_router)
 app.include_router(tasks_router)

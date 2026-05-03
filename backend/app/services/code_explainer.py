@@ -2,16 +2,42 @@ import google.generativeai as genai
 import os
 import json
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-
 model = genai.GenerativeModel("gemini-2.5-flash")
 
 
 class AIServiceError(Exception):
     pass
+
+
+def extract_json(text: str):
+    """
+    Safely extract JSON from messy LLM output
+    """
+
+    # 🔹 Remove markdown wrappers
+    text = re.sub(r"```json|```", "", text).strip()
+
+    # 🔹 Try direct parse
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # 🔹 Extract first JSON object
+    match = re.search(r"\{.*\}", text, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group())
+        except json.JSONDecodeError:
+            pass
+
+    return None
+
 
 async def analyze_code(code: str, language: str):
     try:
@@ -24,7 +50,14 @@ async def analyze_code(code: str, language: str):
         prompt = f"""
 You are a senior software engineer.
 
-Analyze this {language} code and return ONLY valid JSON:
+Analyze this {language} code.
+
+Return ONLY raw JSON.
+Do NOT use markdown.
+Do NOT wrap in ```json.
+Do NOT add any text outside JSON.
+
+Return strictly:
 
 {{
   "explanation": "simple explanation",
@@ -35,33 +68,35 @@ Analyze this {language} code and return ONLY valid JSON:
 Code:
 {code}
 """
+
         response = model.generate_content(prompt)
 
         if not response or not response.text:
-            raise AIServiceError("Empty response from AI model")
+            raise AIServiceError("Empty response from AI")
 
         text = response.text.strip()
 
-        try:
-            return json.loads(text)
+        # 🔥 Robust parsing
+        parsed = extract_json(text)
 
-        except json.JSONDecodeError as e:
-            logger.warning(f"JSON parsing failed: {e}")
-            logger.warning(f"Raw response: {text}")
+        if parsed:
+            return parsed
 
-            return {
-                "explanation": text,
-                "issues": [],
-                "improvements": []
-            }
+        # ❗ fallback (still return valid shape)
+        logger.warning(f"Failed to parse JSON. Raw: {text}")
+
+        return {
+            "explanation": text,
+            "issues": [],
+            "improvements": []
+        }
 
     except ValueError as e:
-        raise AIServiceError(f"Invalid input: {str(e)}")
+        raise AIServiceError(str(e))
 
     except AIServiceError:
         raise
 
     except Exception as e:
-        logger.error(f"AI service failed: {str(e)}")
-
-        raise AIServiceError("Failed to analyze code. Please try again.")
+        logger.error(f"AI error: {str(e)}")
+        raise AIServiceError("Failed to analyze code")

@@ -5,7 +5,7 @@ from app.api.deps import get_current_user
 from app.services.aiplanner import generate_tasks
 from app.lib.db import supabase
 from app.services.code_explainer import analyze_code, AIServiceError
-from app.models.aimodel import CodeRequest
+from app.models.aimodel import CodeRequest, CodeResponse
 from uuid import UUID
 
 router = APIRouter(prefix="/ai", tags=["ai"])
@@ -21,11 +21,10 @@ async def generate_project_tasks(
     user=Depends(get_current_user)
 ):
     user_id = user["user_id"]
-    
 
     project = supabase.table("projects") \
         .select("id") \
-        .eq("id", project_id) \
+        .eq("id", str(project_id)) \
         .eq("user_id", user_id) \
         .execute()
 
@@ -43,7 +42,7 @@ async def generate_project_tasks(
 
     task_payload = [
         {
-            "project_id": project_id,
+            "project_id": str(project_id), 
             "title": task,
             "description": None,
             "status": "todo",
@@ -61,19 +60,23 @@ async def generate_project_tasks(
         "tasks": res.data
     }
 
-@router.post("/explain-code")
-async def explain_code(body: CodeRequest, user=Depends(get_current_user)):
+@router.post("/explain-code", response_model=CodeResponse)
+async def explain_code(
+    payload: CodeRequest,
+    user=Depends(get_current_user)
+):
     try:
-        result = await analyze_code(body.code, body.language)
+        result = await analyze_code(payload.code, payload.language)
 
-        return {
-            "message": "Code explained successfully",
-            "data": result
-        }
+        return CodeResponse(
+            explanation=result.get("explanation", ""),
+            issues=result.get("issues", []),
+            improvements=result.get("improvements", [])
+        )
 
     except AIServiceError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     except Exception:
-        raise HTTPException(status_code=500, detail="Failed to explain code")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
     

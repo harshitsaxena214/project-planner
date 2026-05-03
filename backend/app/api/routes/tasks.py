@@ -24,7 +24,7 @@ async def get_tasks(project_id: UUID, user=Depends(get_current_user)):
 
         res = supabase.table("tasks") \
             .select("*") \
-            .eq("project_id", project_id) \
+            .eq("project_id", str(project_id)) \
             .execute()
 
         return {
@@ -69,7 +69,7 @@ async def get_task(task_id: UUID, user=Depends(get_current_user)):
             status_code=500,
             detail=f"Internal Server Error: {str(e)}"
         )
-    
+
 @router.patch("/{task_id}/status")
 async def update_task_status(task_id: UUID, body: UpdateStatus, user=Depends(get_current_user)):
     try:
@@ -93,7 +93,7 @@ async def update_task_status(task_id: UUID, body: UpdateStatus, user=Depends(get
 
         project = supabase.table("projects") \
             .select("id") \
-            .eq("id", project_id) \
+            .eq("id", str(project_id)) \
             .eq("user_id", user_id) \
             .execute()
 
@@ -117,7 +117,8 @@ async def update_task_status(task_id: UUID, body: UpdateStatus, user=Depends(get
         raise HTTPException(
             status_code=500,
             detail=f"Internal Server Error: {str(e)}"
-        )  
+        )
+
 
 @router.delete("/{task_id}")
 async def delete_task(task_id: UUID, user=Depends(get_current_user)):
@@ -136,7 +137,7 @@ async def delete_task(task_id: UUID, user=Depends(get_current_user)):
 
         supabase.table("tasks") \
             .delete() \
-            .eq("id", task_id) \
+            .eq("id", str(task_id)) \
             .execute()
 
         return {
