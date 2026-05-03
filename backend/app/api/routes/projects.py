@@ -86,7 +86,4 @@ async def delete_project(project_id: UUID, user=Depends(get_current_user)):
         "data": res.data
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-    
+        raise HTTPException(status_code=500, detail=str(e))  
