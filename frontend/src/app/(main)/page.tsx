@@ -22,8 +22,7 @@ export default function Home() {
     mutationFn: async () => {
       const token = await getToken();
       const api = createApi(token);
-
-      // 1️⃣ Create project
+      
       const res = await api.post("/projects/", {
         name,
         description,
@@ -31,7 +30,6 @@ export default function Home() {
 
       const project = res.data.data;
 
-      // 2️⃣ Generate tasks
       await api.post(`/ai/plan/${project.id}`, {
         title: name,
         description: description,

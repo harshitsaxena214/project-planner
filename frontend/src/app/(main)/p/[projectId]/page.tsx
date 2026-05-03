@@ -1,72 +1,28 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { createApi } from "@/lib/api";
+
+import { useTasks } from "@/hooks/useTasks";
+import { useProject } from "@/hooks/useProject";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProjectPage() {
-  const { projectId } = useParams();
-  const { getToken } = useAuth();
-  const queryClient = useQueryClient();
+ const { projectId } = useParams();
 
-  const { data: tasks = [], isLoading } = useQuery({
-    queryKey: ["tasks", projectId],
-    queryFn: async () => {
-      const token = await getToken();
-      const api = createApi(token);
+const {
+  tasks,
+  isLoading,
+  updateStatus,
+  deleteTask,
+  isUpdating,
+  isDeleting,
+} = useTasks(projectId as string);
 
-      const res = await api.get(`/tasks/project/${projectId}`);
-      return res.data.data;
-    },
-  });
+const { project } = useProject(projectId as string);
 
-  const updateStatus = useMutation({
-    mutationFn: async ({
-      taskId,
-      status,
-    }: {
-      taskId: string;
-      status: string;
-    }) => {
-      const token = await getToken();
-      const api = createApi(token);
-
-      await api.patch(`/tasks/${taskId}/status`, {
-        status,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
-    },
-  });
-
-  const deleteTask = useMutation({
-    mutationFn: async (taskId: string) => {
-      const token = await getToken();
-      const api = createApi(token);
-
-      await api.delete(`/tasks/${taskId}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
-    },
-  });
-
-  const { data: project } = useQuery({
-    queryKey: ["project", projectId],
-    queryFn: async () => {
-      const token = await getToken();
-      const api = createApi(token);
-
-      const res = await api.get(`/projects/${projectId}`);
-      return res.data.data;
-    },
-  });
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -110,9 +66,9 @@ export default function ProjectPage() {
                     <Button
                       size="sm"
                       variant="secondary"
-                      disabled={updateStatus.isPending}
+                      disabled={isUpdating}
                       onClick={() =>
-                        updateStatus.mutate({
+                        updateStatus({
                           taskId: task.id,
                           status: "in_progress",
                         })
@@ -124,9 +80,9 @@ export default function ProjectPage() {
                     <Button
                       size="sm"
                       variant="default"
-                      disabled={updateStatus.isPending}
+                      disabled={isUpdating}
                       onClick={() =>
-                        updateStatus.mutate({
+                        updateStatus({
                           taskId: task.id,
                           status: "done",
                         })
@@ -138,8 +94,8 @@ export default function ProjectPage() {
                     <Button
                       size="sm"
                       variant="destructive"
-                      disabled={deleteTask.isPending}
-                      onClick={() => deleteTask.mutate(task.id)}
+                      disabled={isDeleting}
+                      onClick={() => deleteTask(task.id)}
                     >
                       Delete
                     </Button>
