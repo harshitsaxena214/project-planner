@@ -7,13 +7,11 @@ from app.api.routes.ai import router as ai_router
 from app.api.routes.tasks import router as tasks_router
 from app.api.routes.user import router as user_router
 from app.api.webhooks.clerk import router as webhook_router
+import os
 
 app = FastAPI()
 
-origins = [
-    "http://localhost:3000",
-    "https://nexora-lac-chi.vercel.app"
-]
+origins = os.getenv("CORS_ORIGINS", "").split(",")
 
 app.add_middleware(
     CORSMiddleware,
