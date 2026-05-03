@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Target, FolderKanban, Code2, Plus } from "lucide-react";
+import { Ship, FolderKanban, Code2, Plus } from "lucide-react";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import {
@@ -44,10 +44,10 @@ export function AppSidebar({ projects }: any) {
               boxShadow: "0 2px 10px rgba(45,106,48,0.30)",
             }}
           >
-            <Target className="h-4 w-4 text-white" />
+            <Ship className="h-4 w-4 text-white" />
           </div>
           <div className="group-data-[collapsible=icon]:hidden">
-            <p className="text-sm font-semibold tracking-tight text-gray-800">Nexora</p>
+            <p className="text-sm font-semibold tracking-tight text-gray-800">Flow<span className="text-green-800">Ship</span></p>
             <p className="text-[11px] text-gray-400">AI project copilot</p>
           </div>
         </div>
