@@ -7,3 +7,4 @@ supabase
 google-generativeai
 pydantic
 clerk-backend-api
+svix
