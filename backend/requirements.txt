@@ -6,3 +6,4 @@ python-jose[cryptography]
 supabase
 google-generativeai
 pydantic
+clerk-backend-api
