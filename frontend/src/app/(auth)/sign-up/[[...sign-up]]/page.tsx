@@ -1,11 +1,11 @@
+"use client";
+
 import { SignUp } from "@clerk/nextjs";
 
-const Page = () => {
+export default function Page() {
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <SignUp />
+    <div className="flex justify-center items-center h-screen">
+      <SignUp afterSignUpUrl="/" />
     </div>
   );
-};
-
-export default Page;
+}
