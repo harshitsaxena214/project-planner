@@ -19,16 +19,13 @@ def extract_json(text: str):
     Safely extract JSON from messy LLM output
     """
 
-    # 🔹 Remove markdown wrappers
     text = re.sub(r"```json|```", "", text).strip()
 
-    # 🔹 Try direct parse
     try:
         return json.loads(text)
     except json.JSONDecodeError:
         pass
 
-    # 🔹 Extract first JSON object
     match = re.search(r"\{.*\}", text, re.DOTALL)
     if match:
         try:
@@ -76,13 +73,11 @@ Code:
 
         text = response.text.strip()
 
-        # 🔥 Robust parsing
         parsed = extract_json(text)
 
         if parsed:
             return parsed
 
-        # ❗ fallback (still return valid shape)
         logger.warning(f"Failed to parse JSON. Raw: {text}")
 
         return {

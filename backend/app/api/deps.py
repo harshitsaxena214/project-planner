@@ -37,7 +37,6 @@ async def get_current_user(request: Request):
     if not auth:
         raise HTTPException(status_code=401, detail="No token provided")
 
-    # safer parsing
     parts = auth.split()
     if len(parts) != 2 or parts[0] != "Bearer":
         raise HTTPException(status_code=401, detail="Invalid Authorization header")
